@@ -4,6 +4,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import session from 'express-session';
+import bodyParser from 'body-parser';
+import passport from 'passport';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 // Import des fonctions depuis index.js
 import { activeSessions, loadConfig, startBotForSession } from './index.js';
@@ -554,8 +559,147 @@ app.listen(PORT, () => {
     console.log(`🫀 Keep-alive: http://localhost:${PORT}/api/ping`);
     console.log(`📈 Stats: http://localhost:${PORT}/api/stats`);
     console.log(`=========================================\n`);
-    
-    // Démarrer le système keep-alive
+
+ // ==================== MIDDLEWARE ====================
+app.use(express.json());
+app.use(express.static(__dirname));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// ==================== SESSION ====================
+app.use(
+  session({
+    secret: 'dawens_learn_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 10 * 60 * 60 * 1000 } // 10h session
+  })
+);
+
+// ==================== PASSPORT CONFIG ====================
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
+
+// --- GitHub Strategy ---
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID || 'your_github_client_id',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'your_github_secret',
+      callbackURL: '/auth/github/callback'
+    },
+    (accessToken, refreshToken, profile, done) => done(null, profile)
+  )
+);
+
+// --- Google Strategy ---
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_secret',
+      callbackURL: '/auth/google/callback'
+    },
+    (token, tokenSecret, profile, done) => done(null, profile)
+  )
+);
+
+// ==================== ROUTES LOGIN ====================
+
+// --- LOGIN PAGE ---
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// --- SIGNUP PAGE ---
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'signup.html'));
+});
+
+// --- HANDLE LOGIN ---
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  const usersPath = path.join(__dirname, 'users.json');
+  const users = fs.existsSync(usersPath) ? JSON.parse(fs.readFileSync(usersPath)) : [];
+
+  const user = users.find(u => u.email === email && u.password === password);
+  if (!user) return res.status(401).send('Invalid email or password');
+
+  req.session.user = user;
+  res.redirect('/index.html');
+});
+
+// --- HANDLE SIGNUP ---
+app.post('/signup', (req, res) => {
+  const { username, email, password, number } = req.body;
+  const usersPath = path.join(__dirname, 'users.json');
+  const users = fs.existsSync(usersPath) ? JSON.parse(fs.readFileSync(usersPath)) : [];
+
+  if (users.find(u => u.email === email)) return res.status(400).send('Email already used');
+
+  users.push({ username, email, password, number, createdAt: new Date().toISOString() });
+  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+
+  res.redirect('/login');
+});
+
+// --- GitHub Auth ---
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+app.get(
+  '/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect('/index.html');
+  }
+);
+
+// --- Google Auth ---
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get(
+  '/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect('/index.html');
+  }
+);
+
+// --- Logout ---
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+});
+
+// --- Protected route ---
+app.get('/index.html', (req, res, next) => {
+  if (!req.session.user) return res.redirect('/login');
+  next();
+});
+
+// ==================== EXISTING BOT API (unchanged) ====================
+function startKeepAlive() {
+  console.log('🫀 Keep-Alive system active...');
+  setInterval(() => console.log(`💓 ${new Date().toISOString()} - Alive`), 4 * 60 * 1000);
+}
+
+app.get('/', (req, res) => res.redirect('/login'));
+
+// Keep old bot API routes (unchanged)
+app.get('/api/ping', (req, res) => res.json({ status: 'alive', user: req.session.user || null }));
+
+// ... (you can keep all your other bot API routes here exactly as before)
+
+// ==================== 404 HANDLER ====================
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// ==================== START SERVER ====================
+app.listen(PORT, () => {
+  console.log(`🔥 DAWENS LEARN server running on http://localhost:${PORT}`);
+
     startKeepAlive();
 });
 
