@@ -768,9 +768,12 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   });
 }
 
-// protect index route
+app.get("/signup", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "signup.html"));
+});
+// Page d'accueil = login
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(PUBLIC_DIR, "login.html"));
 });
 
 // static files (login/signup available publicly)
