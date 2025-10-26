@@ -1,8 +1,8 @@
 // ==================== commands/group.js ====================
 
-const config = require('../config');
-const { cmd, commands } = require('../command');
-const { getGroupAdmins, runtime, sleep } = require('../lib/functions');
+import config from '../config.js';
+import { cmd, commands } from '../command.js';
+import { getGroupAdmins, runtime, sleep } from '../lib/functions.js';
 
 // =========================================================
 // 🔇 MUTE GROUP COMMAND

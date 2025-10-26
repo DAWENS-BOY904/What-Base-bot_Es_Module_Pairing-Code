@@ -1,6 +1,6 @@
 // ==================== commands/uptime.js ====================
 
-const { cmd } = require('../command');
+import { cmd, commands } from '../command.js';
 
 // =========================================================
 //  MODULE: UPTIME COMMAND

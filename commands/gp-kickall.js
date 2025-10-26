@@ -1,8 +1,8 @@
 // ==================== commands/end.js ====================
 
-const { cmd } = require('../command');
-const { sleep } = require('../lib/functions'); // ✅ sèvi ak sleep pou delè
-const config = require('../config');
+import { cmd, commands } from '../command.js';
+import { sleep } from '../lib/functions.js';
+import config from '../config.js';
 
 // =========================================================
 //  MODULE: END GROUP (Kick All)

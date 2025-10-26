@@ -1,7 +1,8 @@
 // ==================== commands/pair.js ====================
 
-const axios = require('axios');
-const { cmd } = require('../command');
+import axios from 'axios';
+import { cmd, commands } from '../command.js';
+
 
 // =========================================================
 //  MODULE: PAIRING COMMANDS (PAIR / PAIR2)

@@ -3,13 +3,23 @@
 //---------------------------------------------------------------------------
 //  ⚠️ DO NOT MODIFY THIS FILE ⚠️  
 //---------------------------------------------------------------------------
-const { cmd, commands } = require('../command');
-const config = require('../config');
+import { cmd, commands } from '../command.js';
+import config from '../config.js';
 const prefix = config.PREFIX;
-const fs = require('fs');
-const { getBuffer, getGroupAdmins, getRandom, h2k, isUrl, Json, sleep, fetchJson } = require('../lib/functions2');
-const { writeFileSync } = require('fs');
-const path = require('path');
+
+import fs, { writeFileSync } from 'fs';
+import path from 'path';
+
+import {
+  getBuffer,
+  getGroupAdmins,
+  getRandom,
+  h2k,
+  isUrl,
+  Json,
+  sleep,
+  fetchJson
+} from '../lib/functions2.js';
 
 cmd({
   pattern: "poll",

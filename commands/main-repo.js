@@ -1,12 +1,12 @@
 // ==================== commands/repo.js ====================
 
-const config = require('../config');
-const { cmd, commands } = require('../command');
-const os = require('os');
-const { runtime, sleep } = require('../lib/functions');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+import config from '../config.js';
+import { cmd, commands } from '../command.js';
+import os from 'os';
+import { runtime, sleep } from '../system/func.js';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 // =========================================================
 //  MODULE: REPO COMMAND

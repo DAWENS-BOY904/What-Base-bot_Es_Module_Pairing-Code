@@ -1,11 +1,11 @@
 // ==================== commands/update.js ====================
 
-const { cmd } = require("../command");
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const AdmZip = require("adm-zip");
-const { setCommitHash, getCommitHash } = require("../data/updateDB");
+import { cmd } from "../command.js";
+import axios from "axios";
+import fs from "fs";
+import path from "path";
+import AdmZip from "adm-zip";
+import { setCommitHash, getCommitHash } from "../system/updateDB.js";
 
 // =========================================================
 //  MODULE: UPDATE COMMAND

@@ -1,8 +1,8 @@
 // ==================== commands/ping.js ====================
 
-const os = require('os');
-const { performance } = require('perf_hooks');
-const { cmd } = require('../command');
+import os from 'os';
+import { performance } from 'perf_hooks';
+import { cmd } from '../command.js';
 
 // =========================================================
 //  MODULE: PING / SPEED CHECK

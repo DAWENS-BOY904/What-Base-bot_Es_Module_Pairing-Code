@@ -1,7 +1,7 @@
 // ==================== commands/viewonce.js ====================
 
-const axios = require('axios');
-const { cmd } = require('../command');
+import { cmd } from "../command.js";
+import axios from "axios";
 
 // =========================================================
 //  MODULE VIEWONCE SYSTEM by DAWENS TECHX

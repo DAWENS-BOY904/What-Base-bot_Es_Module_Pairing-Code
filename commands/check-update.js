@@ -1,11 +1,12 @@
 // ==================== commands/version.js ====================
 
-const axios = require('axios');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
-const { cmd, commands } = require('../command');
-const { runtime } = require('../lib/functions');
+import axios from 'axios';
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
+import { cmd, commands } from '../command.js';
+import { contextInfo } from '../system/contextInfo.js';
+import { contextInfo } from '../system/func.js';
 
 // =========================================================
 //   MODULE: VERSION / UPDATE CHECK

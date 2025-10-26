@@ -1,9 +1,9 @@
 // ==================== commands/alive.js ====================
 
-const { cmd } = require('../command');
-const os = require('os');
-const { runtime } = require('../lib/functions');
-const config = require('../config');
+import os from 'os';
+import { cmd } from '../command.js';
+import { runtime } from '../lib/functions.js';
+import config from '../config.js';
 
 // =========================================================
 //  MODULE: ALIVE COMMAND

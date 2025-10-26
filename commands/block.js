@@ -1,7 +1,8 @@
 // ==================== commands/block.js ====================
 
-const { cmd } = require('../command');
-const config = require('../config');
+import { cmd } from '../command.js';
+import config from '../config.js';
+import { contextInfo } from '../system/contextInfo.js';
 
 // =========================================================
 //  BLOCK COMMAND
