@@ -2,13 +2,25 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import fetch from 'node-fetch';
-import session from 'express-session';
-import bodyParser from 'body-parser';
-import passport from 'passport';
-import { Strategy as GitHubStrategy } from 'passport-github2';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import session from "express-session";
+import { Strategy as LocalStrategy } from "passport-local";
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
+import bcrypt from "bcrypt";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import dotenv from "dotenv";
+import flash from "connect-flash";
+import cookieParser from "cookie-parser";
+import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from "uuid";
+dotenv.config();
+import fetch from "node-fetch";
+
+// ----------------- Paths -----------------
+const PUBLIC_DIR = path.join(__dirname, "public");
+const DB_PATH = path.join(__dirname, "database.db");
 
 // Import des fonctions depuis index.js
 import { activeSessions, loadConfig, startBotForSession } from './index.js';
@@ -18,6 +30,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ✅ Middleware to serve static files (HTML, CSS, JS, images)
+app.use(express.static(PUBLIC_DIR));
 
 // Middleware
 app.use(express.json());
@@ -70,12 +85,6 @@ function saveConfig(config) {
     return false;
   }
 }
-
-// ==================== Routes ====================
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'deploye.html'));
-});
 
 // ==================== API Routes ====================
 
@@ -547,10 +556,6 @@ app.use((error, req, res, next) => {
         message: process.env.NODE_ENV === 'development' ? error.message : 'Une erreur est survenue'
     });
 });
-
-// Démarrer le serveur
-app.listen(PORT, () => {
-    console.log(`\n🔥 MINI JESUS CRASH Server Started!`);
     console.log(`=========================================`);
     console.log(`🚀 Déploiement: http://localhost:${PORT}`);
     console.log(`🔧 API Config: http://localhost:${PORT}/api/config`);
@@ -560,145 +565,220 @@ app.listen(PORT, () => {
     console.log(`📈 Stats: http://localhost:${PORT}/api/stats`);
     console.log(`=========================================\n`);
 
- // ==================== MIDDLEWARE ====================
-app.use(express.json());
-app.use(express.static(__dirname));
-app.use(bodyParser.urlencoded({ extended: true }));
+// session config
+app.use(session({
+  secret: process.env.SESSION_SECRET || "change_this_secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    // maxAge set per login "Remember Me" logic below
+    // default: session cookie (browser close)
+  }
+}));
 
-// ==================== SESSION ====================
-app.use(
-  session({
-    secret: 'dawens_learn_secret_key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { maxAge: 10 * 60 * 60 * 1000 } // 10h session
-  })
-);
-
-// ==================== PASSPORT CONFIG ====================
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((obj, done) => done(null, obj));
+// open sqlite DB
+let db;
+(async () => {
+  db = await open({
+    filename: DB_PATH,
+    driver: sqlite3.Database
+  });
+  // create table if not exists
+  await db.exec(`CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT,
+    email TEXT UNIQUE,
+    phone TEXT,
+    password TEXT,
+    provider TEXT,
+    provider_id TEXT,
+    created_at INTEGER
+  );`);
+})().catch(err => { console.error(err); process.exit(1); });
 
-// --- GitHub Strategy ---
-passport.use(
-  new GitHubStrategy(
-    {
-      clientID: process.env.GITHUB_CLIENT_ID || 'your_github_client_id',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'your_github_secret',
-      callbackURL: '/auth/github/callback'
-    },
-    (accessToken, refreshToken, profile, done) => done(null, profile)
-  )
-);
-
-// --- Google Strategy ---
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_secret',
-      callbackURL: '/auth/google/callback'
-    },
-    (token, tokenSecret, profile, done) => done(null, profile)
-  )
-);
-
-// ==================== ROUTES LOGIN ====================
-
-// --- LOGIN PAGE ---
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'login.html'));
+// passport serialize/deserialize
+passport.serializeUser((user, done) => {
+  done(null, user.id);
 });
-
-// --- SIGNUP PAGE ---
-app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, 'signup.html'));
-});
-
-// --- HANDLE LOGIN ---
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const usersPath = path.join(__dirname, 'users.json');
-  const users = fs.existsSync(usersPath) ? JSON.parse(fs.readFileSync(usersPath)) : [];
-
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) return res.status(401).send('Invalid email or password');
-
-  req.session.user = user;
-  res.redirect('/index.html');
-});
-
-// --- HANDLE SIGNUP ---
-app.post('/signup', (req, res) => {
-  const { username, email, password, number } = req.body;
-  const usersPath = path.join(__dirname, 'users.json');
-  const users = fs.existsSync(usersPath) ? JSON.parse(fs.readFileSync(usersPath)) : [];
-
-  if (users.find(u => u.email === email)) return res.status(400).send('Email already used');
-
-  users.push({ username, email, password, number, createdAt: new Date().toISOString() });
-  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
-
-  res.redirect('/login');
-});
-
-// --- GitHub Auth ---
-app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
-app.get(
-  '/auth/github/callback',
-  passport.authenticate('github', { failureRedirect: '/login' }),
-  (req, res) => {
-    req.session.user = req.user;
-    res.redirect('/index.html');
+passport.deserializeUser(async (id, done) => {
+  try {
+    const row = await db.get("SELECT * FROM users WHERE id = ?", id);
+    done(null, row || false);
+  } catch (err) {
+    done(err);
   }
-);
+});
 
-// --- Google Auth ---
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get(
-  '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    req.session.user = req.user;
-    res.redirect('/index.html');
+// LOCAL STRATEGY
+passport.use(new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+}, async (email, password, done) => {
+  try {
+    const user = await db.get("SELECT * FROM users WHERE email = ?", email.toLowerCase());
+    if (!user) return done(null, false, { message: "Incorrect email or password." });
+    if (!user.password) return done(null, false, { message: "No local password set for this account." });
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return done(null, false, { message: "Incorrect email or password." });
+    return done(null, user);
+  } catch (err) {
+    return done(err);
   }
-);
+}));
 
-// --- Logout ---
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login'));
-});
-
-// --- Protected route ---
-app.get('/index.html', (req, res, next) => {
-  if (!req.session.user) return res.redirect('/login');
-  next();
-});
-
-// ==================== EXISTING BOT API (unchanged) ====================
-function startKeepAlive() {
-  console.log('🫀 Keep-Alive system active...');
-  setInterval(() => console.log(`💓 ${new Date().toISOString()} - Alive`), 4 * 60 * 1000);
+// OAUTH: GOOGLE
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: (process.env.BASE_URL || `http://localhost:${PORT}`) + "/auth/google/callback"
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails && profile.emails[0] && profile.emails[0].value;
+      let user = email ? await db.get("SELECT * FROM users WHERE email = ?", email.toLowerCase()) : null;
+      if (!user) {
+        // create user
+        const id = uuidv4();
+        await db.run("INSERT INTO users (id, username, email, provider, provider_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+          id, profile.displayName || (email || "user"), email ? email.toLowerCase() : null, "google", profile.id, Date.now());
+        user = await db.get("SELECT * FROM users WHERE id = ?", id);
+      } else {
+        // link provider if not set
+        if (!user.provider) {
+          await db.run("UPDATE users SET provider = ?, provider_id = ? WHERE id = ?", "google", profile.id, user.id);
+        }
+      }
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
+  }));
 }
 
-app.get('/', (req, res) => res.redirect('/login'));
+// OAUTH: GITHUB
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: (process.env.BASE_URL || `http://localhost:${PORT}`) + "/auth/github/callback",
+    scope: ["user:email"]
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      // try to find primary email
+      let email = null;
+      if (profile.emails && profile.emails.length) email = profile.emails[0].value;
+      let user = email ? await db.get("SELECT * FROM users WHERE email = ?", email.toLowerCase()) : null;
+      if (!user) {
+        const id = uuidv4();
+        await db.run("INSERT INTO users (id, username, email, provider, provider_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+          id, profile.username || profile.displayName || "github_user", email ? email.toLowerCase() : null, "github", profile.id, Date.now());
+        user = await db.get("SELECT * FROM users WHERE id = ?", id);
+      } else {
+        if (!user.provider) {
+          await db.run("UPDATE users SET provider = ?, provider_id = ? WHERE id = ?", "github", profile.id, user.id);
+        }
+      }
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
+  }));
+}
 
-// Keep old bot API routes (unchanged)
-app.get('/api/ping', (req, res) => res.json({ status: 'alive', user: req.session.user || null }));
+// helper: ensure authenticated
+function ensureAuth(req, res, next) {
+  if (req.isAuthenticated && req.isAuthenticated()) return next();
+  res.redirect("/login.html");
+}
 
-// ... (you can keep all your other bot API routes here exactly as before)
+// ROUTES
 
-// ==================== 404 HANDLER ====================
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// health
+app.get("/health", (req, res) => res.json({ ok: true }));
+
+// local signup API
+app.post("/api/signup", async (req, res) => {
+  try {
+    const { username, email, phone, password } = req.body;
+    if (!email || !username) return res.status(400).json({ error: "Missing fields" });
+    const e = email.toLowerCase();
+    const existing = await db.get("SELECT * FROM users WHERE email = ?", e);
+    if (existing) return res.status(400).json({ error: "Email already in use" });
+    const id = uuidv4();
+    const hash = password ? await bcrypt.hash(password, 10) : null;
+    await db.run("INSERT INTO users (id, username, email, phone, password, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      id, username, e, phone || null, hash, Date.now());
+    return res.json({ ok: true, message: "Account created" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
+
+// local login (POST)
+app.post("/api/login", (req, res, next) => {
+  const remember = req.body.remember === "true" || req.body.remember === true;
+  passport.authenticate("local", (err, user, info) => {
+    if (err) return res.status(500).json({ error: "Auth error" });
+    if (!user) return res.status(401).json({ error: info?.message || "Invalid credentials" });
+    req.logIn(user, (err2) => {
+      if (err2) return res.status(500).json({ error: "Login error" });
+      // set cookie maxAge based on remember flag. If remember -> 30 days. Else 10 hours
+      const ms = remember ? 30 * 24 * 3600 * 1000 : 10 * 3600 * 1000;
+      req.session.cookie.maxAge = ms;
+      // return success
+      res.json({ ok: true, message: "Logged in" });
+    });
+  })(req, res, next);
+});
+
+// logout
+app.post("/api/logout", (req, res) => {
+  req.logout(() => {
+    req.session.destroy(() => {
+      res.json({ ok: true });
+    });
+  });
+});
+
+// current user
+app.get("/api/me", (req, res) => {
+  if (!req.user) return res.json({ user: null });
+  const user = { id: req.user.id, username: req.user.username, email: req.user.email, phone: req.user.phone };
+  res.json({ user });
+});
+
+// OAuth routes
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  app.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
+  app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/login.html" }), (req, res) => {
+    // on success redirect to index
+    res.redirect("/");
+  });
+}
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  app.get("/auth/github", passport.authenticate("github", { scope: ["user:email"] }));
+  app.get("/auth/github/callback", passport.authenticate("github", { failureRedirect: "/login.html" }), (req, res) => {
+    res.redirect("/");
+  });
+}
+
+// protect index route
+app.get("/", ensureAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// static files (login/signup available publicly)
+app.get("/login.html", (req, res) => res.sendFile(path.join(__dirname, "public/login.html")));
+app.get("/signup.html", (req, res) => res.sendFile(path.join(__dirname, "public/signup.html")));
+app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 // ==================== START SERVER ====================
 app.listen(PORT, () => {
-  console.log(`🔥 DAWENS LEARN server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 
     startKeepAlive();
 });

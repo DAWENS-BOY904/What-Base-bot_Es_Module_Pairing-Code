@@ -729,7 +729,145 @@
                 max-width: 250px;
                 text-align: center;
             }
-        }
+        /* ===== HEADER ===== */
+.header {
+  background: #111;
+  color: white;
+  padding: 15px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  transition: background 0.3s ease;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.logo {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: #00bfff;
+  letter-spacing: 1px;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.nav-links a:hover {
+  color: #00bfff;
+  text-shadow: 0 0 8px #00bfff;
+}
+
+.theme-toggle {
+  background: #00bfff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.theme-toggle:hover {
+  background: #0090cc;
+}
+
+/* ===== HERO TOP SECTION ===== */
+.top-hero {
+  background: radial-gradient(circle at center, #001f3f, #000);
+  color: white;
+  text-align: center;
+  padding: 160px 20px 100px;
+  position: relative;
+  overflow: hidden;
+}
+
+.top-hero h1 {
+  font-size: 2.5em;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  animation: fadeInDown 1.2s ease;
+}
+
+.top-hero p {
+  font-size: 1.1em;
+  opacity: 0.8;
+  margin-bottom: 40px;
+  animation: fadeIn 2s ease;
+}
+
+/* ===== HERO BUTTONS GRID ===== */
+.hero-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+  animation: fadeInUp 1.5s ease;
+}
+
+.hero-buttons a {
+  display: block;
+  padding: 15px 0;
+  background: linear-gradient(135deg, #00bfff, #0078ff);
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(0,191,255,0.4);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* Effè klike ak limyè */
+.hero-buttons a:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #00eaff, #00bfff);
+  box-shadow: 0 0 25px #00eaff;
+}
+
+.hero-buttons a:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 35px #00bfff;
+}
+
+/* ===== ANIMASYON ===== */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+  }
+}
     
     </style>
 </head>
@@ -737,24 +875,38 @@
     <div class="grid"></div>
 
     <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <div class="logo">MINI JESUS</div>
-                <ul class="nav-links">
-                    <li><a href="#features">Fonctionnalités</a></li>
-                    <li><a href="#use-cases">Cas d'utilisation</a></li>
-                    <li><a href="#developers">Développeurs</a></li>
-                    <li><a href="#problematic">Problématique</a></li>
-                </ul>
-                <div class="header-actions">
-                    <button id="themeToggle" class="theme-toggle">
-                        <i class="fas fa-moon"></i> Mode Sombre
-                    </button>
-                </div>
-            </nav>
-        </div>
-    </header>
+<header class="header">
+  <div class="container">
+    <nav class="nav">
+      <div class="logo">MINI JESUS</div>
+      <ul class="nav-links">
+        <li><a href="#features">Fonctionnalités</a></li>
+        <li><a href="#use-cases">Cas d'utilisation</a></li>
+        <li><a href="#developers">Développeurs</a></li>
+        <li><a href="#problematic">Problématique</a></li>
+      </ul>
+      <div class="header-actions">
+        <button id="themeToggle" class="theme-toggle">
+          <i class="fas fa-moon"></i> Mode Sombre
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- Top Hero Navigation -->
+<section class="hero top-hero">
+  <h1>MINI JESUS BOT</h1>
+  <p>L'ultime solution WhatsApp pour automatiser vos conversations et booster votre productivité</p>
+  <div class="hero-buttons">
+    <a href="index.html">Home</a>
+    <a href="dawens.html">Dashboard</a>
+    <a href="script.html">Tool</a>
+    <a href="api.html">API</a>
+    <a href="deploye.html">Mini Bot</a>
+    <a href="about.html">À propos</a>
+  </div>
+</section>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -762,7 +914,7 @@
             <h1>MINI JESUS BOT</h1>
             <p>L'ultime solution WhatsApp pour automatiser vos conversations et booster votre productivité</p>
             <div class="hero-buttons">
-                <a href="/deploye.html" class="btn btn-primary">Essayer Gratuitement</a> 
+                <a href="/dave.html" class="btn btn-primary">Essayer Gratuitement</a> 
                 <a href="#features" class="btn btn-secondary">Découvrir les Features</a>
             </div>
         </div>
@@ -845,7 +997,7 @@
             <div class="cta-box">
                 <h2>Prêt à révolutionner votre expérience WhatsApp ?</h2>
                 <p>Rejoignez des milliers d'utilisateurs satisfaits et découvrez la puissance d'MINI JESUS CRASH</p>
-                <a href="/deploye.html" class="btn btn-primary" style="background: var(--gradient); color: white;">Commencer Maintenant</a>
+                <a href="/ley.html" class="btn btn-primary" style="background: var(--gradient); color: white;">Commencer Maintenant</a>
             </div>
         </div>
     </section>
