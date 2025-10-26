@@ -6,6 +6,7 @@ import pino from 'pino';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+// const { commands } = require('./command');
 
 // Import Handler and smsg
 import handler from "./handler.js";
