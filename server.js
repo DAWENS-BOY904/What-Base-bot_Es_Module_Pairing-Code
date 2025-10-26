@@ -23,10 +23,6 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // ----------------- Paths -----------------
 const PUBLIC_DIR = path.join(__dirname, "public");
 const DB_PATH = path.join(__dirname, "database.db");
