@@ -1,22 +1,26 @@
 // ==================== server.js ====================
-import express from 'express';
-import fs from 'fs';
-import path from 'path';
+import express from "express";
+import fs from "fs";
+import path from "path";
 import session from "express-session";
-import { Strategy as LocalStrategy } from "passport-local";
 import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import bcrypt from "bcrypt";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
 import dotenv from "dotenv";
 import flash from "connect-flash";
 import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-dotenv.config();
 import fetch from "node-fetch";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ----------------- Paths -----------------
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -24,9 +28,6 @@ const DB_PATH = path.join(__dirname, "database.db");
 
 // Import des fonctions depuis index.js
 import { activeSessions, loadConfig, startBotForSession } from './index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,7 +37,7 @@ app.use(express.static(PUBLIC_DIR));
 
 // Middleware
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(PUBLIC_DIR));
 
 // ==================== KEEP ALIVE SYSTEM ====================
 function startKeepAlive() {
@@ -583,9 +584,10 @@ app.use(passport.session());
 let db;
 (async () => {
   db = await open({
-    filename: DB_PATH,
+    filename: './data/dawens.sqlite',
     driver: sqlite3.Database
   });
+
   // create table if not exists
   await db.exec(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
