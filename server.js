@@ -34,13 +34,11 @@ import { activeSessions, loadConfig, startBotForSession } from './index.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Middleware to serve static files (HTML, CSS, JS, images)
-app.use(express.static(PUBLIC_DIR));
-
 // Middleware
 app.use(express.json());
 app.use(express.static(PUBLIC_DIR));
 
+app.head('/', (req, res) => res.status(200).send());
 // ==================== KEEP ALIVE SYSTEM ====================
 function startKeepAlive() {
   console.log('🫀 Initialisation du système Keep-Alive...');
@@ -784,7 +782,7 @@ app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirnam
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 
-    startKeepAlive();
+    setTimeout(() => startKeepAlive(), 5000);
 });
 
 export default app;
