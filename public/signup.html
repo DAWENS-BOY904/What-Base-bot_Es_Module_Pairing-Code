@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign Up — DAWENS LEARN</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="card" role="main">
+    <div class="logo">DL</div>
+    <h2 class="header-title">Create your account</h2>
+    <p class="small" style="text-align:center;color:var(--muted)">Sign up with Gmail, phone (no verification), and choose a username</p>
+
+    <form id="signupForm" style="margin-top:12px">
+      <label>Username</label>
+      <input name="username" type="text" placeholder="yourname" required />
+
+      <label style="margin-top:8px">Gmail</label>
+      <input name="email" type="email" placeholder="you@gmail.com" required />
+
+      <label style="margin-top:8px">Phone number</label>
+      <input name="phone" type="tel" placeholder="+509 12 34 5678" />
+
+      <label style="margin-top:8px">Password (optional)</label>
+      <input name="password" type="password" placeholder="Choose a strong password" />
+
+      <div id="signupMsg" class="small" style="margin-top:10px;color:var(--muted)"></div>
+      <button class="primary" type="submit">Create account</button>
+    </form>
+
+    <div style="margin-top:12px; text-align:center">
+      <a href="/login.html" class="small" style="color:#9dbff0">Already have an account? Sign in</a>
+    </div>
+
+    <div class="footer" style="margin-top:16px">
+      <div>Owner: DAWENS BOY TECH</div>
+      <div>Email: berryxoe@gmail.com • Phone: +50942241547</div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

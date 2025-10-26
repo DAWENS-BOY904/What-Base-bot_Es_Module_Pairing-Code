@@ -1,1 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login — DAWENS LEARN</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="h1">
+    <div class="logo">DL</div>
+    <h2 id="h1" class="header-title">Welcome Back — DAWENS LEARN</h2>
+    <p class="small" style="text-align:center;color:var(--muted)">Sign in to continue your learning journey</p>
 
+    <form id="loginForm" style="margin-top:12px">
+      <label>Email</label>
+      <input name="email" type="email" placeholder="you@gmail.com" required />
+
+      <label style="margin-top:8px">Password</label>
+      <input name="password" type="password" placeholder="Enter your password" required />
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <label style="display:flex;gap:6px;align-items:center" class="small">
+          <input type="checkbox" name="remember" /> Save me
+        </label>
+        <a href="/signup.html" style="margin-left:auto;color:#9dbff0;text-decoration:none" class="small">Sign up</a>
+      </div>
+
+      <div id="loginMsg" class="small" style="margin-top:10px;color:var(--muted)"></div>
+      <button class="primary" type="submit">Sign In</button>
+    </form>
+
+    <div style="margin-top:12px; text-align:center" class="small">Or continue with</div>
+    <div class="oauth-row">
+      <a class="oauth" href="/auth/google" title="Sign in with Google">Google</a>
+      <a class="oauth" href="/auth/github" title="Sign in with GitHub">GitHub</a>
+    </div>
+
+    <div class="footer">
+      <div>Owner: DAWENS BOY TECH</div>
+      <div>Email: berryxoe@gmail.com • Phone: +50942241547</div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
