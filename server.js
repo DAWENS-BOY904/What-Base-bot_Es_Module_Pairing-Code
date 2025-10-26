@@ -1,12 +1,13 @@
 // ==================== server.js ====================
+// --- Fix Node.js ESM __dirname ---
 import { fileURLToPath } from 'url';
 import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// hello
+
+// --- Core modules & packages ---
 import express from "express";
 import fs from "fs";
-import path from "path";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -16,12 +17,12 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import flash from "connect-flash";
 import cookieParser from "cookie-parser";
-import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import fetch from "node-fetch";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
+// --- Config ---
 dotenv.config();
 // ----------------- Paths -----------------
 const PUBLIC_DIR = path.join(__dirname, "public");
