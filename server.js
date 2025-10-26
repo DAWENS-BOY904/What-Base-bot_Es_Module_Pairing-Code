@@ -769,14 +769,14 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 }
 
 // protect index route
-app.get("/", ensureAuth, (req, res) => {
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // static files (login/signup available publicly)
 app.get("/login.html", (req, res) => res.sendFile(path.join(__dirname, "public/login.html")));
 app.get("/signup.html", (req, res) => res.sendFile(path.join(__dirname, "public/signup.html")));
-app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirname, "public/index.html")));
 
 // ==================== START SERVER ====================
 app.listen(PORT, () => {
