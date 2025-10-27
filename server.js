@@ -584,9 +584,9 @@ app.use(passport.session());
 let db;
 (async () => {
   db = await open({
-    filename: './data/dawens.sqlite',
-    driver: sqlite3.Database
-  });
+  filename: '/tmp/dawens.sqlite',
+  driver: sqlite3.Database
+});
 
   // create table if not exists
   await db.exec(`CREATE TABLE IF NOT EXISTS users (
