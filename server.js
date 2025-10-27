@@ -782,10 +782,14 @@ app.get("/signup.html", (req, res) => res.sendFile(path.join(__dirname, "public/
 app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirname, "public/index.html")));
 
 // ==================== START SERVER ====================
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-
+if (process.env.VERCEL) {
+  console.log("🚀 Running on Vercel serverless environment");
+  // Vercel ap jere HTTP server la otomatikman
+} else {
+  app.listen(PORT, () => {
+    console.log(`✅ Local server running at http://localhost:${PORT}`);
     setTimeout(() => startKeepAlive(), 5000);
-});
+  });
+}
 
 export default app;
