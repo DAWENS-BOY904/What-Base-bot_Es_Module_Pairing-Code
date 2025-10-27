@@ -784,15 +784,10 @@ app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirnam
 // ==================== START SERVER ====================
 // --- existing imports and app setup above ---
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ?? 3000;
 
-// Pa kouri app.listen() si se sou Vercel
-if (process.env.VERCEL) {
-  console.log("🚀 Running on Vercel serverless environment");
-} else {
-  app.listen(PORT, () => {
-    console.log(`✅ Local server running at http://localhost:${PORT}`);
-  });
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`✅ Local server running at http://localhost:${PORT}`));
 }
 
 export default app;
