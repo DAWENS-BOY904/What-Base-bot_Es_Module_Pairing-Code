@@ -360,7 +360,8 @@ async function startAllSessions() {
     return;
   }
 
-  for (const session of sessions) {
+  const sessions = config.sessions || [];
+for (const session of sessions) { ... }
     if (session.name && session.sessionId && session.ownerNumber) {
       await startBotForSession(session);
     }
