@@ -3,57 +3,63 @@
 //---------------------------------------------------------------------------
 //  ⚠️ DO NOT MODIFY THIS FILE ⚠️  
 //---------------------------------------------------------------------------
-import { cmd, commands } from '../command.js';
-import config from '../config.js';
-const prefix = config.PREFIX;
+// ==================== commands/gp-poll.js ====================
 
-import fs, { writeFileSync } from 'fs';
-import path from 'path';
+import config from "../config.js";
 
-import {
-  getBuffer,
-  getGroupAdmins,
-  getRandom,
-  h2k,
-  isUrl,
-  Json,
-  sleep,
-  fetchJson
-} from '../lib/functions2.js';
+// =========================================================
+//  MODULE: GROUP POLL (ESM COMPATIBLE)
+// =========================================================
 
-cmd({
-  pattern: "poll",
+export default {
+  name: "poll",
+  alias: ["gpoll", "survey", "sondage"],
+  desc: "Create a poll in group chat.",
   category: "group",
-  desc: "Create a poll with a question and options in the group.",
-  filename: __filename,
-}, async (conn, mek, m, { from, isGroup, body, sender, groupMetadata, participants, prefix, pushname, reply }) => {
-  try {
-    let [question, optionsString] = body.split(";");
-    
-    if (!question || !optionsString) {
-      return reply(`Usage: ${prefix}poll question;option1,option2,option3...`);
-    }
+  react: "📊",
+  groupOnly: true,
 
-    let options = [];
-    for (let option of optionsString.split(",")) {
-      if (option && option.trim() !== "") {
-        options.push(option.trim());
+  async run(conn, m, msg, args, { reply, isGroup, metadata }) {
+    try {
+      if (!isGroup) {
+        return reply("❌ Cette commande ne peut être utilisée que dans un groupe.");
       }
-    }
 
-    if (options.length < 2) {
-      return reply("*Please provide at least two options for the poll.*");
-    }
-
-    await conn.sendMessage(from, {
-      poll: {
-        name: question,
-        values: options,
-        selectableCount: 1,
-        toAnnouncementGroup: true,
+      // Si pa gen paramèt, montre syntax la
+      if (!args.length) {
+        return reply(
+          `📊 *Créer un sondage dans le groupe*\n\n` +
+          `Exemple:\n` +
+          `> ${config.PREFIX}poll Quel est votre langage préféré? | JavaScript | Python | C++ | Java`
+        );
       }
-    }, { quoted: mek });
-  } catch (e) {
-    return reply(`*An error occurred while processing your request.*\n\n_Error:_ ${e.message}`);
+
+      // Sépare titre ak opsyon yo
+      const [questionPart, ...optionsPart] = args.join(" ").split("|").map(a => a.trim());
+
+      if (!questionPart || optionsPart.length < 2) {
+        return reply("⚠️ Format invalide.\n> Ex: .poll Quelle couleur préférez-vous ? | Rouge | Bleu | Vert");
+      }
+
+      const pollQuestion = questionPart;
+      const pollOptions = optionsPart.filter(opt => opt.length > 0);
+
+      // ✅ Envoi du sondage
+      await conn.sendMessage(m.chat, {
+        poll: {
+          name: pollQuestion,
+          values: pollOptions,
+          selectableCount: 1
+        }
+      });
+
+      await conn.sendMessage(m.chat, {
+        text: `✅ *Sondage créé avec succès !*\n📋 Question: *${pollQuestion}*\n🗳️ Options:\n${pollOptions.map(o => `- ${o}`).join("\n")}`
+      });
+
+    } catch (e) {
+      console.error("❌ Poll Error:", e);
+      reply(`⚠️ Une erreur est survenue lors de la création du sondage.\n\n${e.message}`);
+    }
   }
-});
+};
