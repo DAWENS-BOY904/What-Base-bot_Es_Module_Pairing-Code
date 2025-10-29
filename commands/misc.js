@@ -1,152 +1,116 @@
-// ==================== commands/viewonce.js ====================
+// ==================== commands/misc.js ====================
+import os from "os";
+import config from "../config.js";
 
-import { cmd } from "../command.js";
-import axios from "axios";
+export default [
+  // =========================================================
+  //  VV1 - Send view-once video
+  // =========================================================
+  {
+    name: "vv1",
+    alias: ["viewonce", "once"],
+    desc: "Send video as view-once media",
+    category: "misc",
+    react: "🎥",
+    async run(conn, m, msg, args, { reply }) {
+      try {
+        if (!m.quoted || !m.quoted.message?.videoMessage)
+          return reply("⚠️ Reply to a *video* message.");
 
-// =========================================================
-//  MODULE VIEWONCE SYSTEM by DAWENS TECHX
-// =========================================================
+        const media = await m.quoted.download();
+        await conn.sendMessage(m.chat, {
+          video: media,
+          viewOnce: true,
+          caption: "🎬 This video can be viewed once!"
+        }, { quoted: m });
 
-// =============== MODEL 1: BASIC VIEWONCE FETCH ===============
-cmd({
-  pattern: 'vv3',
-  alias: ['retrieve', '🔥', 'viewonce'],
-  desc: 'Fetch and resend a ViewOnce media message (image, video, audio).',
-  category: 'misc',
-  use: '<reply_to_viewonce>',
-  filename: __filename,
-}, 
-async (conn, mek, m, { from, reply }) => {
-  try {
-    const quoted = m.quoted || m.msg?.contextInfo?.quotedMessage;
-    if (!quoted) return reply('⚠️ Please reply to a ViewOnce message.');
-
-    let messageObj = quoted.viewOnceMessageV2?.message || quoted.message || null;
-    if (!messageObj) return reply('❌ Not a valid ViewOnce message.');
-
-    // Handle each media type
-    if (messageObj.imageMessage) {
-      const cap = messageObj.imageMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(messageObj.imageMessage);
-      return conn.sendMessage(from, { image: { url: file }, caption: cap }, { quoted: mek });
-    } 
-    if (messageObj.videoMessage) {
-      const cap = messageObj.videoMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(messageObj.videoMessage);
-      return conn.sendMessage(from, { video: { url: file }, caption: cap }, { quoted: mek });
+        await reply("✅ Video sent as *view-once*.");
+      } catch (err) {
+        console.error("VV1 Error:", err);
+        reply("❌ Failed to send view-once video.");
+      }
     }
-    if (messageObj.audioMessage) {
-      const file = await conn.downloadAndSaveMediaMessage(messageObj.audioMessage);
-      return conn.sendMessage(from, { audio: { url: file } }, { quoted: mek });
-    }
+  },
 
-    return reply('⚠️ Unsupported ViewOnce media type.');
-  } catch (e) {
-    console.error('ViewOnce fetch error:', e);
-    reply('❌ Error while fetching ViewOnce message.');
+  // =========================================================
+  //  VV2 - Convert view-once to normal
+  // =========================================================
+  {
+    name: "vv2",
+    alias: ["unview", "openviewonce"],
+    desc: "Convert a view-once message to normal",
+    category: "misc",
+    react: "🔓",
+    async run(conn, m, msg, args, { reply }) {
+      try {
+        if (!m.quoted || !m.quoted.message?.viewOnceMessageV2)
+          return reply("⚠️ Reply to a *view-once* message.");
+
+        const media = await m.quoted.download();
+        const type = Object.keys(m.quoted.message.viewOnceMessageV2.message)[0];
+
+        await conn.sendMessage(m.chat, {
+          [type]: media,
+          caption: "🔓 View-once removed!"
+        }, { quoted: m });
+
+        await reply("✅ View-once message unlocked.");
+      } catch (err) {
+        console.error("VV2 Error:", err);
+        reply("❌ Failed to unlock view-once message.");
+      }
+    }
+  },
+
+  // =========================================================
+  //  VV3 - View message type info
+  // =========================================================
+  {
+    name: "vv3",
+    alias: ["msginfo", "info"],
+    desc: "Show type & data of replied message",
+    category: "misc",
+    react: "📦",
+    async run(conn, m, msg, args, { reply }) {
+      try {
+        if (!m.quoted) return reply("⚠️ Reply to any message to inspect.");
+        const type = Object.keys(m.quoted.message)[0];
+        const msgType = type.replace(/Message$/, "");
+        await reply(`🔍 *Message Type:* ${msgType}\n\n🧩 Raw: ${JSON.stringify(m.quoted.message[type], null, 2)}`);
+      } catch (err) {
+        console.error("VV3 Error:", err);
+        reply("❌ Failed to inspect message.");
+      }
+    }
+  },
+  
+  // =========================================================
+  //  ABOUT - Bot info
+  // =========================================================
+  {
+    name: "about",
+    alias: ["info", "system"],
+    desc: "Show bot information",
+    category: "misc",
+    react: "💡",
+    async run(conn, m, msg, args, { reply }) {
+      const botName = config.BOT_NAME || "MINI-JESUS-CRASH";
+      const owner = config.OWNER_NAME || "Dawens Boy";
+      const uptime = runtime(process.uptime());
+      const memory = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+      const totalMem = (os.totalmem() / 1024 / 1024).toFixed(1);
+
+      const info = `
+╭───〔 *💡 ${botName} Info* 〕───◉
+│👑 *Owner:* ${owner}
+│⚙️ *Version:* 1.0.0
+│🧠 *Memory:* ${memory}MB / ${totalMem}MB
+│⏱️ *Uptime:* ${uptime}
+│📲 *Platform:* ${os.platform()}
+╰────────────────────◉
+      `.trim();
+
+      await reply(info);
+    }
   }
-});
-
-
-// =============== MODEL 2: FULL VIEWONCE FETCH (ALL TYPES) ===============
-cmd({
-  pattern: 'vv3full',
-  alias: ['viewoncefull', 'vfull'],
-  desc: 'Fetch and resend any ViewOnce message (image, video, audio, sticker, document).',
-  category: 'misc',
-  use: '<reply_to_viewonce>',
-  filename: __filename,
-}, 
-async (conn, mek, m, { from, reply }) => {
-  try {
-    const quoted = m.quoted || m.msg?.contextInfo?.quotedMessage;
-    if (!quoted) return reply('⚠️ Please reply to a ViewOnce message.');
-
-    let msg = quoted.viewOnceMessageV2?.message || quoted.message || null;
-    if (!msg) return reply('❌ Not a valid ViewOnce message.');
-
-    if (msg.imageMessage) {
-      const cap = msg.imageMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(msg.imageMessage);
-      return conn.sendMessage(from, { image: { url: file }, caption: cap }, { quoted: mek });
-    }
-    if (msg.videoMessage) {
-      const cap = msg.videoMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(msg.videoMessage);
-      return conn.sendMessage(from, { video: { url: file }, caption: cap }, { quoted: mek });
-    }
-    if (msg.audioMessage) {
-      const file = await conn.downloadAndSaveMediaMessage(msg.audioMessage);
-      return conn.sendMessage(from, { audio: { url: file } }, { quoted: mek });
-    }
-    if (msg.stickerMessage) {
-      const file = await conn.downloadAndSaveMediaMessage(msg.stickerMessage);
-      return conn.sendMessage(from, { sticker: { url: file } }, { quoted: mek });
-    }
-    if (msg.documentMessage) {
-      const file = await conn.downloadAndSaveMediaMessage(msg.documentMessage);
-      return conn.sendMessage(from, {
-        document: { url: file, mimetype: msg.documentMessage.mimetype, fileName: msg.documentMessage.fileName || 'file' }
-      }, { quoted: mek });
-    }
-
-    reply('⚠️ Unsupported ViewOnce media type.');
-  } catch (e) {
-    console.error('Error fetching ViewOnce Full:', e);
-    reply('❌ An error occurred while fetching ViewOnce message.');
-  }
-});
-
-
-// =============== MODEL 3: VIEWONCE WITH EXPIRY NOTICE ===============
-cmd({
-  pattern: 'vv3notify',
-  alias: ['viewoncealert', 'viewonceinfo'],
-  desc: 'Fetch ViewOnce content and notify about expiration.',
-  category: 'misc',
-  use: '<reply_to_viewonce>',
-  filename: __filename,
-}, 
-async (conn, mek, m, { from, reply }) => {
-  try {
-    const quoted = m.quoted || m.msg?.contextInfo?.quotedMessage;
-    if (!quoted) return reply('⚠️ Please reply to a ViewOnce message.');
-
-    let msg = quoted.viewOnceMessageV2?.message || quoted.message || null;
-    if (!msg) return reply('❌ Not a valid ViewOnce message.');
-
-    const expireWarning = '⚠️ *Note:* This ViewOnce message will disappear soon. Saved temporarily by MINI-JESUS-BOT.';
-
-    if (msg.imageMessage) {
-      const cap = msg.imageMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(msg.imageMessage);
-      await conn.sendMessage(from, { image: { url: file }, caption: cap }, { quoted: mek });
-      return reply(expireWarning);
-    }
-    if (msg.videoMessage) {
-      const cap = msg.videoMessage.caption || '';
-      const file = await conn.downloadAndSaveMediaMessage(msg.videoMessage);
-      await conn.sendMessage(from, { video: { url: file }, caption: cap }, { quoted: mek });
-      return reply(expireWarning);
-    }
-    if (msg.audioMessage) {
-      const file = await conn.downloadAndSaveMediaMessage(msg.audioMessage);
-      await conn.sendMessage(from, { audio: { url: file } }, { quoted: mek });
-      return reply(expireWarning);
-    }
-
-    reply('⚠️ Unsupported ViewOnce media type.');
-  } catch (e) {
-    console.error('Error fetching ViewOnce with notify:', e);
-    reply('❌ An error occurred while fetching the ViewOnce message.');
-  }
-});
-
-
-// =========================================================
-//  EXPORT MODULE
-// =========================================================
-module.exports = {
-  name: 'viewonce',
-  category: 'misc',
-};
+];
