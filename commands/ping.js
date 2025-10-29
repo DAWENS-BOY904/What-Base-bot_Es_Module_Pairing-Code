@@ -1,67 +1,61 @@
 // ==================== commands/ping.js ====================
 
-import os from 'os';
-import { performance } from 'perf_hooks';
-import { cmd } from '../command.js';
+import os from "os";
+import { runtime } from "../system/func.js";
+import { performance } from "perf_hooks";
+import config from "../config.js";
 
 // =========================================================
-//  MODULE: PING / SPEED CHECK
+//  MODULE: PING COMMAND (ESM)
 // =========================================================
 
-cmd({
-  pattern: 'ping',
-  alias: ['speed', 'pong', 'status'],
-  desc: '🏓 Check bot response time, RAM usage and uptime.',
-  category: 'main',
-  react: '🏓',
-  filename: __filename,
-}, 
-async (conn, mek, m, { from }) => {
-  try {
-    const start = performance.now();
+export default {
+  name: "ping",
+  alias: ["speed", "latency"],
+  desc: "Check the bot's response speed.",
+  category: "main",
+  react: "🏓",
 
-    // Send initial message (check speed)
-    const temp = await conn.sendMessage(from, { text: '⏳ Checking speed...' }, { quoted: mek });
-    const end = performance.now();
-    const ping = (end - start).toFixed(2);
+  async run(conn, m, msg, args, { reply }) {
+    try {
+      const start = performance.now();
 
-    // Calculate uptime
-    const uptime = process.uptime();
-    const h = Math.floor(uptime / 3600);
-    const mU = Math.floor((uptime % 3600) / 60);
-    const s = Math.floor(uptime % 60);
+      // Envoie un premier message
+      const sent = await conn.sendMessage(m.chat, { text: "🏓 *Pinging...*" }, { quoted: m });
 
-    // RAM usage
-    const usedRam = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
-    const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+      const end = performance.now();
+      const ping = (end - start).toFixed(2);
+      const uptime = runtime(process.uptime());
+      const cpu = os.cpus()[0].model;
+      const ramUsed = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+      const totalRam = (os.totalmem() / 1024 / 1024).toFixed(1);
 
-    // Create final status message
-    const statusText = `
-╭───〔 *MINI-JESUS-CRASH STATUS* 〕───⬣
-│ 🏓 *Ping:* ${ping} ms
-│ ⏱️ *Uptime:* ${h}h ${mU}m ${s}s
-│ 💾 *RAM:* ${usedRam}MB / ${totalRam}GB
-│ ⚙️ *OS:* ${os.platform().toUpperCase()} ${os.release()}
-╰────────────────────────⬣
-    `.trim();
+      const botName = config.BOT_NAME || "MINI-JESUS-CRASH";
 
-    // Send the final result
-    await conn.sendMessage(from, {
-      text: statusText,
-      contextInfo: { mentionedJid: [m.sender], forwardingScore: 1, isForwarded: true },
-      edit: temp.key
-    });
+      // Message final
+      const msgPing = `
+╭───〔 *🏓 ${botName} PING* 〕───◉
+│⚡ *Response:* ${ping}ms
+│🕐 *Uptime:* ${uptime}
+│💾 *RAM:* ${ramUsed}MB / ${totalRam}MB
+│🧠 *CPU:* ${cpu.split(" ")[0]} ${cpu.split(" ")[1]}
+│
+│✅ *Status:* Online & Active
+╰────────────────────◉
+> _ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴅᴀᴡᴇɴꜱ-ᴛᴇᴄʜx_
+      `.trim();
 
-  } catch (e) {
-    console.error('Ping Error:', e);
-    await conn.sendMessage(from, { text: '❌ Error while checking ping.' }, { quoted: mek });
+      await conn.sendMessage(
+        m.chat,
+        {
+          text: msgPing,
+          edit: sent.key, // (Si ou vle ke li edite msg “Pinging...” a)
+        },
+        { quoted: m }
+      );
+    } catch (e) {
+      console.error("Ping Error:", e);
+      await reply(`❌ Ping failed: ${e.message}`);
+    }
   }
-});
-
-// =========================================================
-//  EXPORT MODULE
-// =========================================================
-module.exports = {
-  name: 'ping',
-  category: 'main'
 };
