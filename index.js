@@ -350,7 +350,7 @@ async function startBotForSession(sessionConfig) {
 // ==================== Lancer toutes les sessions ====================
 async function startAllSessions() {
   const config = loadConfig();
-  const sessionList = config.sessions || []; // 🔁 renommé pour éviter tout doublon
+  const sessionList = Array.isArray(config.sessions) ? config.sessions : [];
 
   console.log(chalk.blue(`🚀 Démarrage de ${sessionList.length} session(s)...`));
 
@@ -360,7 +360,7 @@ async function startAllSessions() {
   }
 
   for (const session of sessionList) {
-    if (session.name && session.sessionId && session.ownerNumber) {
+    if (session && session.name && session.sessionId && session.ownerNumber) {
       await startBotForSession(session);
     } else {
       console.log(chalk.red(`⚠️ Session invalide ignorée: ${JSON.stringify(session)}`));
