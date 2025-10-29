@@ -784,10 +784,10 @@ app.get("/index.html", ensureAuth, (req, res) => res.sendFile(path.join(__dirnam
 // ==================== START SERVER ====================
 // --- existing imports and app setup above ---
 
-const PORT = process.env.PORT ?? 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 
-if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`✅ Local server running at http://localhost:${PORT}`));
-}
+    setTimeout(() => startKeepAlive(), 5000);
+});
 
 export default app;
