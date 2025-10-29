@@ -1,43 +1,40 @@
 // ==================== commands/uptime.js ====================
 
-import { cmd, commands } from '../command.js';
+import config from "../config.js";
 
 // =========================================================
 //  MODULE: UPTIME COMMAND
 // =========================================================
 
-cmd({
-  pattern: 'uptime',
-  alias: ['runtime', 'alive'],
-  desc: 'Check bot uptime and performance status.',
-  category: 'utility',
-  react: '⏱️',
-  filename: __filename
-}, 
-async (conn, mek, m, { from, reply }) => {
-  try {
-    // Helper function pou formate uptime
-    const formatUptime = (seconds) => {
-      const days = Math.floor(seconds / (3600 * 24));
-      const hours = Math.floor((seconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = Math.floor(seconds % 60);
-      
-      let timeString = '';
-      if (days > 0) timeString += `📅 ${days}d `;
-      if (hours > 0) timeString += `⏰ ${hours}h `;
-      if (minutes > 0) timeString += `🕒 ${minutes}m `;
-      timeString += `⏱️ ${secs}s`;
-      
-      return timeString.trim();
-    };
+// ==================== commands/uptime.js ====================
+// ✅ ESM Light version — pi pwòp, modèn, senp
 
-    // Calcule uptime & ping
-    const uptime = formatUptime(process.uptime());
-    const ping = `${Date.now() - (m.messageTimestamp * 1000)}ms`;
+export default {
+  name: "uptime",
+  alias: ["runtime", "alive"],
+  description: "Affiche le temps d'activité et le ping du bot.",
+  category: "utility",
 
-    // Mesaj stylize
-    const message = `
+  async execute(conn, mek, m, { from, reply }) {
+    try {
+      // 🕒 Format tan
+      const formatUptime = (seconds) => {
+        const days = Math.floor(seconds / (3600 * 24));
+        const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        return [
+          days > 0 ? `📅 ${days}d` : "",
+          hours > 0 ? `⏰ ${hours}h` : "",
+          minutes > 0 ? `🕒 ${minutes}m` : "",
+          `⏱️ ${secs}s`
+        ].filter(Boolean).join(" ");
+      };
+
+      const uptime = formatUptime(process.uptime());
+      const ping = `${Date.now() - (m.messageTimestamp * 1000)}ms`;
+
+      const message = `
 ╭───〔 *MINI-JESUS-BOT STATUS* 〕───⬣
 │ 🤖 *Uptime:* ${uptime}
 │ ⚡ *Status:* Online ✅
@@ -46,26 +43,18 @@ async (conn, mek, m, { from, reply }) => {
 ╰──────────────⬣
 `.trim();
 
-    // Voye mesaj la
-    await conn.sendMessage(from, { 
-      text: message,
-      contextInfo: {
-        isForwarded: true,
-        forwardingScore: 777,
-        mentionedJid: [m.sender]
-      }
-    }, { quoted: mek });
+      await conn.sendMessage(from, { 
+        text: message,
+        contextInfo: {
+          isForwarded: true,
+          forwardingScore: 777,
+          mentionedJid: [m.sender]
+        }
+      }, { quoted: mek });
 
-  } catch (e) {
-    console.error('❌ Error in uptime command:', e);
-    reply(`❌ Error checking uptime: ${e.message}`);
+    } catch (err) {
+      console.error("❌ Erreur uptime:", err);
+      reply(`❌ Erreur: ${err.message}`);
+    }
   }
-});
-
-// =========================================================
-//  EXPORT MODULE
-// =========================================================
-module.exports = {
-  name: 'uptime',
-  category: 'utility'
 };
