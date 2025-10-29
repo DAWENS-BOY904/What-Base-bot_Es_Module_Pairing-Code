@@ -350,19 +350,20 @@ async function startBotForSession(sessionConfig) {
 // ==================== Lancer toutes les sessions ====================
 async function startAllSessions() {
   const config = loadConfig();
-  const sessions = config.sessions || [];
+  const sessionList = config.sessions || []; // 🔁 renommé pour éviter tout doublon
 
-  console.log(chalk.blue(`🚀 Démarrage de ${sessions.length} session(s)...`));
+  console.log(chalk.blue(`🚀 Démarrage de ${sessionList.length} session(s)...`));
 
-  if (sessions.length === 0) {
+  if (sessionList.length === 0) {
     console.log(chalk.yellow('💡 Aucune session à démarrer. Utilisez la page web pour déployer une session.'));
     return;
   }
 
-  const sessions = config.sessions || [];
-for (const session of sessions) { ... }
+  for (const session of sessionList) {
     if (session.name && session.sessionId && session.ownerNumber) {
       await startBotForSession(session);
+    } else {
+      console.log(chalk.red(`⚠️ Session invalide ignorée: ${JSON.stringify(session)}`));
     }
   }
 }
