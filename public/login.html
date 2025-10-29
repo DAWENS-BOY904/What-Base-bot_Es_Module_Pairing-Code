@@ -4,9 +4,332 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Login — DAWENS LEARN</title>
-  <link rel="stylesheet" href="/style.css">
+  <style>
+/* ================================
+   DAWENS LEARN — PROFESSIONAL UI
+   Style: Dark Glass Neon Motion
+   Author: DAWENS BOY TECH
+   ================================ */
+
+:root {
+  --bg: #050505;
+  --card-bg: rgba(25, 25, 25, 0.45);
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #9ba0b0;
+  --accent: #6c63ff;
+  --neon1: #00ffff;
+  --neon2: #ff00ff;
+  --neon3: #ff4b2b;
+  --neon4: #39ff14;
+  --neon5: #ffbf00;
+  --neon6: #ff0099;
+  --neon7: #00ffcc;
+  --neon8: #ff66cc;
+  --neon9: #33ccff;
+  --neon10: #d3ff00;
+  --radius: 16px;
+  --blur: 24px;
+  --transition: all 0.4s ease;
+  --glow: 0 0 18px var(--accent), 0 0 28px var(--accent);
+}
+
+/* ========== RESET ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: #fff;
+  overflow: hidden;
+}
+
+/* ========== LOADER ========== */
+#loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+  z-index: 9999;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+
+#loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-box {
+  text-align: center;
+  position: relative;
+  animation: pulse 3s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.8; }
+}
+
+.loader-circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  position: relative;
+  border: 3px solid rgba(255,255,255,0.05);
+  animation: rotate 2.8s linear infinite;
+  box-shadow: 0 0 40px var(--accent);
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); filter: hue-rotate(0deg); }
+  100% { transform: rotate(360deg); filter: hue-rotate(360deg); }
+}
+
+.loader-circle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border-top: 4px solid var(--neon1);
+  border-right: 4px solid var(--neon2);
+  border-bottom: 4px solid var(--neon3);
+  border-left: 4px solid var(--neon4);
+  animation: neonRotate 1.6s linear infinite;
+}
+
+@keyframes neonRotate {
+  0% {
+    transform: rotate(0deg);
+    border-top-color: var(--neon1);
+    border-right-color: var(--neon2);
+    border-bottom-color: var(--neon3);
+    border-left-color: var(--neon4);
+  }
+  25% {
+    border-top-color: var(--neon5);
+    border-right-color: var(--neon6);
+    border-bottom-color: var(--neon7);
+    border-left-color: var(--neon8);
+  }
+  50% {
+    border-top-color: var(--neon9);
+    border-right-color: var(--neon10);
+    border-bottom-color: var(--neon2);
+    border-left-color: var(--neon1);
+  }
+  75% {
+    border-top-color: var(--neon3);
+    border-right-color: var(--neon5);
+    border-bottom-color: var(--neon8);
+    border-left-color: var(--neon9);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#loader-percent {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent);
+  margin-top: -4px;
+}
+
+.loader-info {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.4;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+  animation: infoFade 3s infinite ease-in-out;
+}
+
+@keyframes infoFade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* glowing background around loader */
+.loader-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--neon1),
+    var(--neon2),
+    var(--neon3),
+    var(--neon4),
+    var(--neon5),
+    var(--neon6),
+    var(--neon7),
+    var(--neon8),
+    var(--neon9),
+    var(--neon10),
+    var(--neon1)
+  );
+  filter: blur(120px);
+  animation: colorSpin 10s linear infinite;
+}
+
+@keyframes colorSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========== MAIN CARD ========== */
+.card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(var(--blur));
+  padding: 32px;
+  width: 92%;
+  max-width: 420px;
+  border-radius: var(--radius);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6), 0 0 15px var(--accent);
+  transition: var(--transition);
+  opacity: 0;
+  animation: fadeInUp 1.6s forwards ease;
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translate(-50%, -40%); }
+  100% { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 8px;
+  text-shadow: var(--glow);
+}
+
+.header-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+label {
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+  color: #ddd;
+}
+
+input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.primary {
+  margin-top: 12px;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 600;
+}
+
+.primary:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px var(--accent);
+}
+
+.oauth-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.oauth {
+  padding: 8px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--accent);
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+.oauth:hover {
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 0 20px var(--accent);
+}
+
+.footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 8px;
+}
+
+/* Responsif */
+@media (max-width: 450px) {
+  .card {
+    padding: 24px;
+  }
+  .logo {
+    font-size: 2rem;
+  }
+  .header-title {
+    font-size: 1.1rem;
+  }
+}
+</style>
+  <link rel="icon" href="https://files.catbox.moe/x16nfd.png">
 </head>
 <body>
+  <!-- ========== LOADING SCREEN ========== -->
+  <div id="loader">
+    <div class="loader-glow"></div>
+    <div class="loader-box">
+      <div class="loader-circle"></div>
+      <div id="loader-percent">0%</div>
+      <div class="loader-info" id="location-info">
+        <span>Loading location...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MAIN CARD ========== -->
   <div class="card" role="main" aria-labelledby="h1">
     <div class="logo">DL</div>
     <h2 id="h1" class="header-title">Welcome Back — DAWENS LEARN</h2>
@@ -42,6 +365,89 @@
     </div>
   </div>
 
-  <script src="/app.js"></script>
+<script defer>
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("loginForm");
+  const loginMsg = document.getElementById("loginMsg");
+  const loader = document.getElementById("loader");
+  const percentEl = document.getElementById("loader-percent");
+  const locationEl = document.getElementById("location-info");
+
+  // ================= LOGIN SCRIPT =================
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      loginMsg.textContent = "⏳ Signing in...";
+      loginMsg.style.color = "#fff";
+
+      const email = loginForm.email.value.trim();
+      const password = loginForm.password.value.trim();
+      const remember = loginForm.remember.checked;
+
+      if (!email || !password) {
+        loginMsg.textContent = "⚠️ Please fill in all fields!";
+        loginMsg.style.color = "#ffbf00";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, remember })
+        });
+        const json = await res.json();
+
+        if (json.ok) {
+          loginMsg.textContent = "✅ Login successful! Redirecting...";
+          loginMsg.style.color = "#39ff14";
+          setTimeout(() => {
+            window.location.href = json.redirect || "/index.html";
+          }, 1200);
+        } else {
+          loginMsg.textContent = json.error || "⚠️ Invalid credentials";
+          loginMsg.style.color = "#ff4b2b";
+        }
+      } catch (err) {
+        console.error(err);
+        loginMsg.textContent = "❌ Server error";
+        loginMsg.style.color = "#ff4b2b";
+      }
+    });
+  }
+
+  // ================= LOADER SCRIPT =================
+  if (loader && percentEl) {
+    let percent = 0;
+    const connection = navigator.connection?.downlink || 1.5;
+    const speed = Math.max(10, 120 - Math.floor(connection * 10));
+
+    const progress = setInterval(() => {
+      percent += Math.random() * 6;
+      if (percent >= 100) {
+        percent = 100;
+        percentEl.textContent = "100%";
+        clearInterval(progress);
+        setTimeout(() => loader.classList.add("hidden"), 600);
+      } else {
+        percentEl.textContent = Math.floor(percent) + "%";
+      }
+    }, speed);
+
+    fetch("https://ipapi.co/json/")
+      .then((res) => res.json())
+      .then((data) => {
+        locationEl.innerHTML = `
+          🌍 ${data.country_name || "Unknown"} — ${data.city || "N/A"}<br>
+          📬 ${data.postal || "N/A"} • ${data.ip || ""}
+        `;
+      })
+      .catch(() => {
+        locationEl.innerHTML = "<span>Unable to get location</span>";
+      });
+  }
+});
+</script>
 </body>
 </html>
