@@ -1,10 +1,10 @@
-// ==================== /commands/menu.js ====================
+// ==================== commands/menu.js ====================
 import os from 'os';
-import { cmd, commands } from '../command.js';
 import config from '../config.js';
+import { commands } from '../handler.js';
 
-// Small caps function
-function toSmallCaps(str) {
+// Small caps util
+const toSmallCaps = (str) => {
   const smallCaps = {
     A: 'ᴀ', B: 'ʙ', C: 'ᴄ', D: 'ᴅ', E: 'ᴇ', F: 'ғ', G: 'ɢ', H: 'ʜ',
     I: 'ɪ', J: 'ᴊ', K: 'ᴋ', L: 'ʟ', M: 'ᴍ', N: 'ɴ', O: 'ᴏ', P: 'ᴘ',
@@ -12,143 +12,93 @@ function toSmallCaps(str) {
     Y: 'ʏ', Z: 'ᴢ'
   };
   return str.toUpperCase().split('').map(c => smallCaps[c] || c).join('');
-}
+};
 
-// Utility to sleep
-const wait = ms => new Promise(res => setTimeout(res, ms));
+// Delay helper
+const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
-cmd({
-  pattern: 'menu',
-  alias: ['allmenu', 'jesus'],
-  desc: 'Show command menu (requires reaction to confirm)',
-  category: 'menu',
-  react: '📜',
-  filename: import.meta.url
-}, async (conn, mek, m, { from, pushname, isOwner }) => {
+export default {
+  name: 'menu',
+  description: 'Afficher le menu complet des commandes',
+  category: 'general',
 
-  const reply = async (text) => {
-    try { 
-      return await conn.sendMessage(from, { text }, { quoted: mek }); 
-    } catch (e) { 
-      console.error('reply err', e); 
-    }
-  };
+  async run(conn, m, msg, args, context) {
+    try {
+      const { sender, isOwner } = context;
+      const from = m.chat;
+      const userName = msg.pushName || 'User';
+      const prefix = config.PREFIX || '.';
+      const botName = config.BOT_NAME || 'MINI-JESUS-CRASH';
+      const ownerName = config.OWNER_NAME || '𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘';
+      const mode = config.MODE || 'default';
+      const menuImage = config.MENU_IMAGE_URL || 'https://files.catbox.moe/x16nfd.png';
 
-  try {
-    const prefix = config.PREFIX || '.';
-    const botName = config.BOT_NAME || 'MINI-JESUS-CRASH';
-    const ownerName = config.OWNER_NAME || '𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘';
-    const menuImage = config.MENU_IMAGE_URL || 'https://files.catbox.moe/x16nfd.png';
-    const userName = pushname || 'User';
-    const mode = config.MODE || 'default';
+      // Ask for confirmation
+      const promptMsg = await conn.sendMessage(from, {
+        text: '⚠️ Ready to open the menu?\nReact (✅ / 👍) or reply "yes" within 30s.'
+      }, { quoted: m });
 
-    // Prompt for reaction confirmation
-    const promptMsg = await conn.sendMessage(from, {
-      text: '⚠️ You ready? React (✅ / 👍) or reply "ready" within 30s to open the menu.'
-    }, { quoted: mek });
+      // Wait for confirmation
+      const waitForConfirmation = (timeout = 30000) => new Promise((resolve) => {
+        let done = false;
 
-    const waitForConfirmation = (timeoutMs = 30000) => new Promise((resolve) => {
-      let resolved = false;
+        const cleanup = () => {
+          conn.ev.off('messages.reaction', onReaction);
+          conn.ev.off('messages.upsert', onUpsert);
+          clearTimeout(timer);
+        };
 
-      const attach = (ev, handler) => {
-        if (conn.ev && conn.ev.on) conn.ev.on(ev, handler);
-        else if (conn.on) conn.on(ev, handler);
-      };
-      const detach = (ev, handler) => {
-        try {
-          if (conn.ev && conn.ev.off) conn.ev.off(ev, handler);
-          else if (conn.ev && conn.ev.removeListener) conn.ev.removeListener(ev, handler);
-          else if (conn.removeListener) conn.removeListener(ev, handler);
-        } catch (_) {}
-      };
-
-      const onReaction = (reaction) => {
-        try {
-          const react = Array.isArray(reaction) ? reaction[0] : reaction;
-          if (!react) return;
-          const key = react.key;
-          const participantRaw = react.participant || react.author || '';
-          const participant = String(participantRaw).split(':')[0] || participantRaw || '';
-          const emoji = react.text || react.reaction || react.emoji || '';
-          const matches = key && key.remoteJid === from && key.id === promptMsg.key.id;
-          if (!matches) return;
-
-          const initiatorJid = m.sender;
-          if (participant !== initiatorJid) return;
-
-          const accepted = ['✅', '👍', '😂', '❤️', '😹'].includes(emoji);
-          if (accepted) {
+        const onReaction = (react) => {
+          const data = Array.isArray(react) ? react[0] : react;
+          if (!data) return;
+          const emoji = data.text || data.reaction || data.emoji;
+          const matches = data.key.remoteJid === from && data.key.id === promptMsg.key.id;
+          if (matches && ['✅', '👍', '❤️'].includes(emoji)) {
             cleanup();
-            resolved = true;
-            resolve({ by: 'reaction', who: participant, reaction: emoji });
+            done = true;
+            resolve(true);
           }
-        } catch (_) {}
-      };
+        };
 
-      const onUpsert = (upsert) => {
-        try {
-          const payload = Array.isArray(upsert) ? upsert : [upsert];
-          for (const item of payload) {
-            const msgs = item.messages || item;
-            const arr = Array.isArray(msgs) ? msgs : [msgs];
-            for (const msg of arr) {
-              if (!msg || !msg.key || !msg.message) continue;
-              const fromInitiator = msg.key.participant 
-                ? msg.key.participant === m.sender 
-                : msg.key.remoteJid === m.sender;
-              if (!fromInitiator) continue;
-              const ext = msg.message.extendedTextMessage;
-              const isReplyToPrompt = ext?.contextInfo?.stanzaId === promptMsg.key.id;
-              const textBody = (msg.message.conversation || ext?.text || '').toLowerCase();
-              const positive = ['wi','yes','ok','✅','👍','❤️'];
-              const matches = positive.some(p => textBody.includes(p));
-              if (isReplyToPrompt || matches) {
-                cleanup();
-                resolved = true;
-                resolve({ by: 'text', who: msg.key.participant || msg.key.remoteJid, text: textBody });
-                return;
-              }
+        const onUpsert = (ev) => {
+          const msgs = ev.messages || [];
+          for (const msg of msgs) {
+            const txt = msg.message?.conversation?.toLowerCase() || '';
+            if (msg.key.remoteJid === from && msg.key.participant === sender && ['yes', 'wi', 'ok', '✅'].includes(txt)) {
+              cleanup();
+              done = true;
+              resolve(true);
             }
           }
-        } catch (_) {}
-      };
+        };
 
-      const timeout = setTimeout(() => {
-        if (resolved) return;
-        cleanup();
-        resolve(null);
-      }, timeoutMs);
+        conn.ev.on('messages.reaction', onReaction);
+        conn.ev.on('messages.upsert', onUpsert);
 
-      const cleanup = () => {
-        detach('messages.reaction', onReaction);
-        detach('messages.upsert', onUpsert);
-        clearTimeout(timeout);
-      };
+        const timer = setTimeout(() => {
+          if (!done) {
+            cleanup();
+            resolve(false);
+          }
+        }, timeout);
+      });
 
-      attach('messages.reaction', onReaction);
-      attach('messages.upsert', onUpsert);
-    });
+      const confirmed = await waitForConfirmation();
+      if (!confirmed) {
+        await conn.sendMessage(from, { text: '⏳ No confirmation received. Menu cancelled.' }, { quoted: promptMsg });
+        return;
+      }
 
-    const confirmation = await waitForConfirmation(30000);
-    if (!confirmation) {
-      await conn.sendMessage(from, { text: '⏳ No reaction received. Menu cancelled.' }, { quoted: promptMsg });
-      return;
-    }
-
-    await conn.sendMessage(from, { react: { text: '⚡', key: promptMsg.key } }).catch(()=>{});
-
-    // Loading animation
-    const stages = [
-      '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜  0%',
-      '🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜  10%',
-      '🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜  25%',
-      '🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜  50%',
-      '🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜  75%',
-      '🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩  100%'
-    ];
-    let loadingMsg;
-    try {
-      loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[0]}` }, { quoted: promptMsg });
+      // Show loading animation
+      const stages = [
+        '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜  0%',
+        '🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜  10%',
+        '🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜  25%',
+        '🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜  50%',
+        '🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜  75%',
+        '🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩  100%'
+      ];
+      let loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[0]}` }, { quoted: promptMsg });
       for (let i = 1; i < stages.length; i++) {
         await wait(500);
         try {
@@ -157,36 +107,29 @@ cmd({
           loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[i]}` });
         }
       }
-      await wait(900);
-      try {
-        await conn.sendMessage(from, { edit: loadingMsg.key, text: `✅ Loading complete! Preparing menu...` });
-      } catch {
-        loadingMsg = await conn.sendMessage(from, { text: `✅ Loading complete! Preparing menu...` });
+      await wait(700);
+      await conn.sendMessage(from, { text: '✅ Menu ready! Displaying...' }, { quoted: loadingMsg });
+
+      // Prepare info
+      const uptime = () => {
+        const sec = process.uptime();
+        const h = Math.floor(sec / 3600);
+        const mU = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        return `${h}h ${mU}m ${s}s`;
+      };
+      const ramUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+      const totalRam = (os.totalmem() / 1024 / 1024).toFixed(1);
+
+      // Group all commands by category
+      const grouped = {};
+      for (const [, cmd] of commands) {
+        const cat = (cmd.category || 'other').toUpperCase();
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(cmd);
       }
-    } catch (e) {
-      console.warn('Loading animation failed', e);
-    }
 
-    // Uptime & RAM usage
-    const uptime = () => {
-      const sec = process.uptime();
-      const h = Math.floor(sec / 3600);
-      const mU = Math.floor((sec % 3600) / 60);
-      const s = Math.floor(sec % 60);
-      return `${h}h ${mU}m ${s}s`;
-    };
-    const ramUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-    const totalRam = (os.totalmem() / 1024 / 1024).toFixed(1);
-
-    // Group commands
-    const grouped = {};
-    for (const plugin of commands) {
-      const category = (plugin.category || 'other').toUpperCase();
-      if (!grouped[category]) grouped[category] = [];
-      grouped[category].push(plugin);
-    }
-
-    let header = `╭───〔 *${botName} MENU* 〕───⬣
+      let header = `╭───〔 *${botName} MENU* 〕───⬣
 │ 🤖 Bot de: *${ownerName}*
 │ 💬 User: *${userName}*
 │ ⏱️ Uptime: *${uptime()}*
@@ -195,49 +138,37 @@ cmd({
 │ 🔰 Prefix: *${prefix}*
 ╰──────────────⬣\n`;
 
-    let menuText = '';
-    for (let k of Object.keys(grouped)) {
-      menuText += `\n\n╔═══❖•ೋ 🌐 *${k} MENU* ೋ•❖═══╗\n`;
-      const cmds = grouped[k].filter(c => c.pattern)
-        .sort((a, b) => a.pattern.localeCompare(b.pattern));
-      cmds.forEach((cmd) => {
-        const usage = cmd.pattern.split('|')[0];
-        menuText += `║ ➤ ${prefix}${toSmallCaps(usage)}\n`;
-      });
-      menuText += `╚════════════════════╝`;
-    }
-    menuText += `\n\n🔋 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐛𝐲 𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘`;
-
-    const quotedMsg = loadingMsg?.key ? loadingMsg : promptMsg;
-    await conn.sendMessage(from, {
-      image: { url: menuImage },
-      caption: (header + menuText).trim(),
-      contextInfo: {
-        mentionedJid: [m.sender],
-        forwardingScore: 777,
-        isForwarded: true
+      let menuText = '';
+      for (const cat of Object.keys(grouped)) {
+        menuText += `\n\n╔═══❖•ೋ 🌐 *${cat} MENU* ೋ•❖═══╗\n`;
+        const cmds = grouped[cat].filter(c => c.name)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        cmds.forEach((cmd) => {
+          menuText += `║ ➤ ${prefix}${toSmallCaps(cmd.name)}\n`;
+        });
+        menuText += `╚════════════════════╝`;
       }
-    }, { quoted: quotedMsg });
 
-    // Optional audio
-    const audioOptions = [
-      'https://files.catbox.moe/3cj1e3.mp4',
-      'https://files.catbox.moe/vq3odo.mp4',
-      'https://files.catbox.moe/fo2kz0.mp4'
-    ];
-    const randomAudio = audioOptions[Math.floor(Math.random() * audioOptions.length)];
-    try {
+      menuText += `\n\n🔋 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐛𝐲 𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘`;
+
       await conn.sendMessage(from, {
-        audio: { url: randomAudio },
-        mimetype: 'audio/mp4',
-        ptt: true
-      });
-    } catch (_) {}
+        image: { url: menuImage },
+        caption: header + menuText,
+        contextInfo: { mentionedJid: [sender] }
+      }, { quoted: m });
 
-  } catch (e) {
-    console.error('❌ Menu error:', e);
-    await conn.sendMessage(from, { text: `❌ Menu Error: ${e.message || e}` }, { quoted: mek });
+      // Play optional sound
+      const sounds = [
+        'https://files.catbox.moe/3cj1e3.mp4',
+        'https://files.catbox.moe/vq3odo.mp4',
+        'https://files.catbox.moe/fo2kz0.mp4'
+      ];
+      const random = sounds[Math.floor(Math.random() * sounds.length)];
+      await conn.sendMessage(from, { audio: { url: random }, mimetype: 'audio/mp4', ptt: true });
+
+    } catch (e) {
+      console.error('❌ Menu Error:', e);
+      await conn.sendMessage(m.chat, { text: `⚠️ Menu Error: ${e.message}` }, { quoted: m });
+    }
   }
-});
-
-export default {};
+};
